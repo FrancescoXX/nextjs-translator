@@ -8,7 +8,6 @@ const TranslatePage = () => {
   const [status, setStatus] = useState("");
   const [recognizedText, setRecognizedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [isStopping, setIsStopping] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('theme') === 'dark';
@@ -16,6 +15,7 @@ const TranslatePage = () => {
     return false;
   });
   const recognitionRef = useRef(null);
+  const shouldRestartRef = useRef(false);
 
   const sourceLangRef = useRef(null);
   const targetLangRef = useRef(null);
@@ -50,6 +50,7 @@ const TranslatePage = () => {
       recognition.onstart = () => {
         console.log("Recognition started");
         setIsRecording(true);
+        shouldRestartRef.current = true;
       };
 
       recognition.onresult = async (event) => {
@@ -62,21 +63,15 @@ const TranslatePage = () => {
       recognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
         setIsRecording(false);
-        setIsStopping(false);
       };
 
       recognition.onend = () => {
         console.log("Recognition ended");
-        setIsRecording(false);
-        setIsStopping(false);
-        //call recognition.start() to restart recognition
-        recognition.start();
-
-
-
-        if (isRecording) {
+        if (shouldRestartRef.current) {
           console.log("Restarting recognition...");
-          recognition.start(); // Restart recognition if still recording
+          recognition.start();
+        } else {
+          setIsRecording(false);
         }
       };
     } else {
@@ -104,10 +99,7 @@ const TranslatePage = () => {
 
   const stopRecognition = () => {
     console.log("Stopping recognition...");
-    if (recognitionRef.current && isRecording) {
-      setIsStopping(true);
-      recognitionRef.current.stop();
-    }
+    window.location.reload(); // Refresh the page
   };
 
   const getLanguageCode = (language) => {
@@ -152,14 +144,6 @@ const TranslatePage = () => {
         <div className="absolute top-4 right-4 flex items-center">
           <div className="w-4 h-4 bg-red-600 rounded-full animate-pulse"></div>
           <span className="ml-2 text-red-600 font-semibold">Translating...</span>
-        </div>
-      )}
-      {isStopping && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-          <div className="flex items-center space-x-2">
-            <FaSpinner className="w-4 h-4 text-white animate-spin" />
-            <span className="text-white font-semibold">Stopping...</span>
-          </div>
         </div>
       )}
       <button
@@ -244,7 +228,7 @@ const TranslatePage = () => {
                 ? "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
                 : "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500"
             }`}
-            disabled={isRecording || isStopping}
+            disabled={isRecording}
           >
             <span className="flex items-center justify-center">
               <FaMicrophone className="mr-2" />
@@ -254,7 +238,7 @@ const TranslatePage = () => {
           <button
             onClick={stopRecognition}
             className="w-full bg-yellow-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-            disabled={!isRecording || isStopping}
+            disabled={!isRecording}
           >
             <span className="flex items-center justify-center">
               <FaStop className="mr-2" />
