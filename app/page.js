@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function TranslatePage() {
   const [result, setResult] = useState('');
@@ -10,6 +10,44 @@ export default function TranslatePage() {
   const [tone, setTone] = useState('formal');
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.error('Speech recognition not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      console.log('Recognition started');
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      const speechText = event.results[event.resultIndex][0].transcript;
+      console.log('Recognized text:', speechText);
+      setText(speechText);
+      handleTranslate(speechText);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      console.log('Recognition ended');
+      setIsRecording(false);
+      if (isRecording) {
+        recognition.start(); // Restart recognition if still recording
+      }
+    };
+  }, [isRecording]);
 
   const handleTranslate = async (inputText) => {
     try {
@@ -33,41 +71,9 @@ export default function TranslatePage() {
     }
   };
 
-  const initializeRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (recognitionRef.current) {
-      recognitionRef.current.stop(); // Stop any existing recognition
-    }
-
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.lang = getLanguageCode(sourceLang);
-    recognition.continuous = true;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-    };
-
-    recognition.onresult = (event) => {
-      const speechText = event.results[event.resultIndex][0].transcript;
-      setText(speechText);
-      handleTranslate(speechText);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-  };
-
   const startRecognition = () => {
-    if (!isRecording) {
-      initializeRecognition();
+    if (!isRecording && recognitionRef.current) {
+      recognitionRef.current.lang = getLanguageCode(sourceLang);
       recognitionRef.current.start();
     }
   };
