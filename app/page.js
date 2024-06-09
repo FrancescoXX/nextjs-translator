@@ -1,20 +1,26 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { FaMicrophone, FaStop, FaSpinner, FaSun, FaMoon } from "react-icons/fa";
 
 const TranslatePage = () => {
-  const [sourceLang, setSourceLang] = useState("Italian");
-  const [tone, setTone] = useState("formal");
   const [translation, setTranslation] = useState("");
   const [status, setStatus] = useState("");
   const [recognizedText, setRecognizedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [darkMode, setDarkMode] = useState(false); // State for dark mode toggle
   const recognitionRef = useRef(null);
-  const targetLangRef = useRef(null); // Ref for target language dropdown
+
+  const sourceLangRef = useRef(null);
+  const targetLangRef = useRef("English");
+  const toneRef = useRef(null);
 
   const handleTranslate = async (speechText) => {
     try {
-      const targetLang = targetLangRef.current.value; // Get target language value directly from dropdown
+      const sourceLang = sourceLangRef.current.value;
+      const targetLang = targetLangRef.current.value;
+      const tone = toneRef.current.value;
       const response = await axios.post("/api/translate", {
         text: speechText,
         source_lang: sourceLang,
@@ -28,37 +34,11 @@ const TranslatePage = () => {
     }
   };
 
-  const handlePreparedRequest = async () => {
-    try {
-      const response = await axios.post("/api/translate", {
-        text: "ciao mondo",
-        source_lang: "Italian",
-        target_lang: "Greek",
-        tone: "formal",
-      });
-      setTranslation(response.data.translation);
-    } catch (error) {
-      console.error("Error:", error);
-      setTranslation("Translation failed");
-    }
-  };
-
-  const handleDummyRequest = async () => {
-    try {
-      const response = await axios.get("/api/dummy");
-      alert(JSON.stringify(response.data));
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to get response");
-    }
-  };
-
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window) {
+    if ("webkitSpeechRecognition" in window) {
       const recognition = new webkitSpeechRecognition();
       recognitionRef.current = recognition;
 
-      recognition.lang = getLanguageCode(sourceLang);
       recognition.continuous = true;
       recognition.interimResults = false;
 
@@ -77,31 +57,37 @@ const TranslatePage = () => {
       recognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
         setIsRecording(false);
+        setIsStopping(false);
       };
 
       recognition.onend = () => {
         console.log("Recognition ended");
+        setRecognizedText("");
+        setTranslation("");
         setIsRecording(false);
+        setIsStopping(false);
         if (isRecording) {
-          recognition.start(); // Restart recognition if still recording
+          recognition.start();
         }
       };
     } else {
       setStatus("Speech recognition not supported in this browser.");
     }
-  }, [sourceLang, isRecording]);
+  }, [isRecording]);
 
   const startRecognition = () => {
     console.log("Starting recognition...");
     if (recognitionRef.current && !isRecording) {
+      recognitionRef.current.lang = getLanguageCode(sourceLangRef.current.value);
       recognitionRef.current.start();
     }
   };
 
   const stopRecognition = () => {
     console.log("Stopping recognition...");
-    if (recognitionRef.current) {
-      recognitionRef.current.abort(); // Use abort to immediately stop the recognition
+    if (recognitionRef.current && isRecording) {
+      setIsStopping(true);
+      recognitionRef.current.stop();
       setIsRecording(false);
     }
   };
@@ -113,104 +99,155 @@ const TranslatePage = () => {
       Spanish: "es-ES",
       French: "fr-FR",
       Tagalog: "tl-PH",
+      Hebrew: "he-IL",
+      Japanese: "ja-JP",
+      Hindi: "hi-IN",
     };
     return languageCodes[language] || "en-US";
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-6">
-      <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6">Translate Text</h1>
-        <div className="mb-4">
-          <label
-            htmlFor="sourceLang"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Source Language
-          </label>
-          <select
-            id="sourceLang"
-            value={sourceLang}
-            onChange={(e) => setSourceLang(e.target.value)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            disabled={isRecording} // Disable dropdown while recording
-          >
-            <option value="Italian">Italian</option>
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="Tagalog">Tagalog</option>
-          </select>
-        </div>
+  const languageOptions = [
+    { value: "Italian", label: "Italian", flag: "🇮🇹" },
+    { value: "English", label: "English", flag: "🇺🇸" },
+    { value: "Spanish", label: "Spanish", flag: "🇪🇸" },
+    { value: "French", label: "French", flag: "🇫🇷" },
+    { value: "Tagalog", label: "Tagalog", flag: "🇵🇭" },
+    { value: "Hebrew", label: "Hebrew", flag: "🇮🇱" },
+    { value: "Japanese", label: "Japanese", flag: "🇯🇵" },
+    { value: "Hindi", label: "Hindi", flag: "🇮🇳" },
+  ];
 
-        <div className="mb-4">
-          <label
-            htmlFor="targetLang"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Target Language
-          </label>
-          <select
-            id="targetLang"
-            ref={targetLangRef} // Assign ref to the target language dropdown
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            disabled={isRecording} // Disable dropdown while recording
-          >
-            <option value="Greek">Greek</option>
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="Tagalog">Tagalog</option>
-          </select>
+  const toneOptions = [
+    { value: "formal", label: "Formal 🎩" },
+    { value: "informal", label: "Informal 🧢" },
+    { value: "professional", label: "Professional 💼" },
+    { value: "friendly", label: "Friendly 😊" },
+  ];
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.documentElement.classList.toggle("dark", !darkMode);
+  };
+
+  return (
+    <div className={`min-h-screen flex flex-col items-center justify-center py-6 relative ${darkMode ? 'dark' : ''}`}>
+      {isRecording && (
+        <div className="absolute top-4 right-4 flex items-center">
+          <div className="w-4 h-4 bg-red-600 rounded-full animate-pulse"></div>
+          <span className="ml-2 text-red-600 font-semibold">Translating...</span>
+        </div>
+      )}
+      {isStopping && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+          <div className="flex items-center space-x-2">
+            <FaSpinner className="w-4 h-4 text-white animate-spin" />
+            <span className="text-white font-semibold">Stopping...</span>
+          </div>
+        </div>
+      )}
+      <button
+        onClick={toggleDarkMode}
+        className="absolute top-4 left-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-md"
+      >
+        {darkMode ? <FaSun /> : <FaMoon />}
+      </button>
+      <div className="max-w-md w-full sm:max-w-lg p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg mx-4">
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">Live Translation APP</h1>
+        <div className="mb-4 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+          <div className="w-full">
+            <label
+              htmlFor="sourceLang"
+              className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+            >
+              Translate from...
+            </label>
+            <select
+              id="sourceLang"
+              ref={sourceLangRef}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+              disabled={isRecording}
+            >
+              {languageOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.flag} {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full">
+            <label
+              htmlFor="targetLang"
+              className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+            >
+              To...
+            </label>
+            <select
+              id="targetLang"
+              ref={targetLangRef}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+              disabled={isRecording}
+            >
+              {languageOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.flag} {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="mb-4">
           <label
             htmlFor="tone"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-xs font-medium text-gray-700 dark:text-gray-300"
           >
             Tone
           </label>
           <select
             id="tone"
-            value={tone}
-            onChange={(e) => setTone(e.target.value)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            ref={toneRef}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+            disabled={isRecording}
           >
-            <option value="formal">Formal</option>
-            <option value="informal">Informal</option>
-            <option value="professional">Professional</option>
-            <option value="friendly">Friendly</option>
+            {toneOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
-        <button
-          onClick={startRecognition}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Record
-        </button>
-        <button
-          onClick={stopRecognition}
-          className="w-full bg-red-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mt-4"
-        >
-          Stop
-        </button>
-        <button
-          onClick={handlePreparedRequest}
-          className="w-full bg-green-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mt-4"
-        >
-          Send Prepared Request
-        </button>
-        <button
-          onClick={handleDummyRequest}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4"
-        >
-          Send Dummy Request
-        </button>
-        <p id="status" className="mt-4 text-gray-700">{status}</p>
-        <p id="recognized-text" className="mt-2 text-gray-700">{recognizedText}</p>
-        <p id="result" className="mt-2 text-lg font-semibold text-gray-700">{translation}</p>
+        <div className="flex space-x-4">
+          <button
+            onClick={startRecognition}
+            className={`w-full py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              isRecording
+                ? "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
+                : "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500"
+            }`}
+            disabled={isRecording || isStopping}
+          >
+            <span className="flex items-center justify-center">
+              <FaMicrophone className="mr-2" />
+              {isRecording ? "...translating..." : "Start"}
+            </span>
+          </button>
+          <button
+            onClick={stopRecognition}
+            className="w-full bg-yellow-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+            disabled={!isRecording || isStopping}
+          >
+            <span className="flex items-center justify-center">
+              <FaStop className="mr-2" />
+              Stop
+            </span>
+          </button>
+        </div>
+
+        <p id="status" className="mt-4 text-gray-700 dark:text-gray-300">{status}</p>
+        <p id="recognized-text" className="mt-2 text-sm text-gray-500">{recognizedText}</p>
+        <p id="result" className="mt-2 text-lg font-semibold text-center text-gray-700 dark:text-gray-300">{translation}</p>
       </div>
     </div>
   );
