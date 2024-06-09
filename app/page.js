@@ -12,7 +12,7 @@ const TranslatePage = () => {
   const [isStopping, setIsStopping] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') !== 'light';
+      return localStorage.getItem('theme') === 'dark';
     }
     return true;
   });
@@ -102,7 +102,9 @@ const TranslatePage = () => {
     }, 500);
   };
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -122,7 +124,7 @@ const TranslatePage = () => {
   }, [isRecording]);
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-top py-4 m-2 relative ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
+    <div className={`min-h-screen flex flex-col items-center justify-top py-4 relative ${darkMode ? 'dark' : ''} ${darkMode ? 'bg-gradient-to-b from-gray-900 to-gray-800' : 'bg-gradient-to-b from-[#CE3DF3] to-white'}`}>
       {isStopping && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
           <div className="flex items-center space-x-2">
@@ -149,10 +151,9 @@ const TranslatePage = () => {
       >
         {darkMode ? <FaSun /> : <FaMoon />}
       </button>
-      <div className="w-full sm:max-w-md p-4 mx-4">
+      <div className="w-full sm:max-w-md p-4">
         <h1 className="text-4xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-          <span className="block">LIVE</span>
-          <span className="block text-2xl">Translator</span>
+          LIVE Translator
         </h1>
         <div className="mb-6">
           <div className="flex justify-between mb-4 space-x-4">
