@@ -18,7 +18,7 @@ const TranslatePage = () => {
   const recognitionRef = useRef(null);
 
   const sourceLangRef = useRef(null);
-  const targetLangRef = useRef("English");
+  const targetLangRef = useRef(null);
   const toneRef = useRef(null);
 
   const handleTranslate = async (speechText) => {
@@ -40,7 +40,7 @@ const TranslatePage = () => {
   };
 
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window) {
+    if ("webkitSpeechRecognition" in window) {
       const recognition = new webkitSpeechRecognition();
       recognitionRef.current = recognition;
 
@@ -67,7 +67,13 @@ const TranslatePage = () => {
 
       recognition.onend = () => {
         console.log("Recognition ended");
+        setIsRecording(false);
+        setIsStopping(false);
+        setRecognizedText("");
+        setTranslation("");
+
         if (isRecording) {
+          console.log("Restarting recognition...");
           recognition.start(); // Restart recognition if still recording
         }
       };
@@ -99,10 +105,6 @@ const TranslatePage = () => {
     if (recognitionRef.current && isRecording) {
       setIsStopping(true);
       recognitionRef.current.stop();
-      setIsRecording(false);
-      setTimeout(() => {
-        setIsStopping(false);
-      }, 3000); // Give some time for the recognition to stop properly
     }
   };
 
@@ -172,7 +174,7 @@ const TranslatePage = () => {
               htmlFor="sourceLang"
               className="block text-xs font-medium text-gray-700 dark:text-gray-300"
             >
-              2Translate from...
+              Translate from...
             </label>
             <select
               id="sourceLang"
