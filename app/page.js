@@ -99,7 +99,7 @@ export default function TranslatePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-6">
       <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6">Translate Text</h1>
+        <h1 className="text-2xl font-bold mb-6">aTranslate Text</h1>
 
         <div className="mb-4">
           <label htmlFor="sourceLang" className="block text-sm font-medium text-gray-700">
