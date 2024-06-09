@@ -69,8 +69,10 @@ const TranslatePage = () => {
         console.log("Recognition ended");
         setIsRecording(false);
         setIsStopping(false);
-        setRecognizedText("");
-        setTranslation("");
+        //call recognition.start() to restart recognition
+        recognition.start();
+
+
 
         if (isRecording) {
           console.log("Restarting recognition...");
