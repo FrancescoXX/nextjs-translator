@@ -9,7 +9,12 @@ const TranslatePage = () => {
   const [recognizedText, setRecognizedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
-  const [darkMode, setDarkMode] = useState(false); // State for dark mode toggle
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
   const recognitionRef = useRef(null);
 
   const sourceLangRef = useRef(null);
@@ -35,7 +40,7 @@ const TranslatePage = () => {
   };
 
   useEffect(() => {
-    if ("webkitSpeechRecognition" in window) {
+    if ('webkitSpeechRecognition' in window) {
       const recognition = new webkitSpeechRecognition();
       recognitionRef.current = recognition;
 
@@ -62,18 +67,24 @@ const TranslatePage = () => {
 
       recognition.onend = () => {
         console.log("Recognition ended");
-        setRecognizedText("");
-        setTranslation("");
-        setIsRecording(false);
-        setIsStopping(false);
         if (isRecording) {
-          recognition.start();
+          recognition.start(); // Restart recognition if still recording
         }
       };
     } else {
       setStatus("Speech recognition not supported in this browser.");
     }
   }, [isRecording]);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
 
   const startRecognition = () => {
     console.log("Starting recognition...");
@@ -89,6 +100,9 @@ const TranslatePage = () => {
       setIsStopping(true);
       recognitionRef.current.stop();
       setIsRecording(false);
+      setTimeout(() => {
+        setIsStopping(false);
+      }, 3000); // Give some time for the recognition to stop properly
     }
   };
 
@@ -126,7 +140,6 @@ const TranslatePage = () => {
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
-    document.documentElement.classList.toggle("dark", !darkMode);
   };
 
   return (
@@ -187,6 +200,7 @@ const TranslatePage = () => {
               ref={targetLangRef}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
               disabled={isRecording}
+              defaultValue="English"
             >
               {languageOptions.map((option) => (
                 <option key={option.value} value={option.value}>
