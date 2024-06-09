@@ -172,7 +172,7 @@ const TranslatePage = () => {
               htmlFor="sourceLang"
               className="block text-xs font-medium text-gray-700 dark:text-gray-300"
             >
-              Translate from...
+              2Translate from...
             </label>
             <select
               id="sourceLang"
