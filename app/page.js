@@ -33,6 +33,7 @@ export default function TranslatePage() {
       const speechText = event.results[event.resultIndex][0].transcript;
       console.log('Recognized text:', speechText);
       setText(speechText);
+
       handleTranslate(speechText);
     };
 
