@@ -71,7 +71,7 @@ const TranslatePage = () => {
       recognition.onend = () => {
         setIsRecording(false);
         setIsStopping(false);
-        if (isRecording) recognition.start();
+        recognition.start();
       };
     } else {
       setStatus("Speech recognition not supported in this browser.");
