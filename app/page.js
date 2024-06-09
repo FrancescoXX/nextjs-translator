@@ -1,112 +1,131 @@
-'use client';
+"use client";
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 
-import { useState, useRef, useEffect } from 'react';
-
-export default function TranslatePage() {
-  const [result, setResult] = useState('');
-  const [text, setText] = useState('');
-  const [sourceLang, setSourceLang] = useState('Italian');
-  const [targetLang, setTargetLang] = useState('Greek');
-  const [tone, setTone] = useState('formal');
+const TranslatePage = () => {
+  const [sourceLang, setSourceLang] = useState("Italian");
+  const [tone, setTone] = useState("formal");
+  const [translation, setTranslation] = useState("");
+  const [status, setStatus] = useState("");
+  const [recognizedText, setRecognizedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef(null);
-  const isRestarting = useRef(false);
+  const targetLangRef = useRef(null); // Ref for target language dropdown
 
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error('Speech recognition not supported in this browser.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.continuous = true;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      console.log('Recognition started');
-      setIsRecording(true);
-    };
-
-    recognition.onresult = (event) => {
-      const speechText = event.results[event.resultIndex][0].transcript;
-      console.log('Recognized text:', speechText);
-      setText(speechText);
-
-      handleTranslate(speechText);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      console.log('Recognition ended');
-      setIsRecording(false);
-      if (isRestarting.current) {
-        recognition.start(); // Restart recognition if still recording
-      }
-    };
-  }, [isRecording]);
-
-  const handleTranslate = async (inputText) => {
+  const handleTranslate = async (speechText) => {
     try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: inputText, source_lang: sourceLang, target_lang: targetLang, tone }),
+      const targetLang = targetLangRef.current.value; // Get target language value directly from dropdown
+      const response = await axios.post("/api/translate", {
+        text: speechText,
+        source_lang: sourceLang,
+        target_lang: targetLang,
+        tone,
       });
-
-      const data = await response.json();
-      if (response.ok) {
-        setResult(data.translation);
-      } else {
-        setResult('Translation failed');
-      }
+      setTranslation(response.data.translation);
     } catch (error) {
-      console.error('Error:', error);
-      setResult('Translation failed');
+      console.error("Error:", error);
+      setTranslation("Translation failed");
     }
   };
 
+  const handlePreparedRequest = async () => {
+    try {
+      const response = await axios.post("/api/translate", {
+        text: "ciao mondo",
+        source_lang: "Italian",
+        target_lang: "Greek",
+        tone: "formal",
+      });
+      setTranslation(response.data.translation);
+    } catch (error) {
+      console.error("Error:", error);
+      setTranslation("Translation failed");
+    }
+  };
+
+  const handleDummyRequest = async () => {
+    try {
+      const response = await axios.get("/api/dummy");
+      alert(JSON.stringify(response.data));
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to get response");
+    }
+  };
+
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognitionRef.current = recognition;
+
+      recognition.lang = getLanguageCode(sourceLang);
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        console.log("Recognition started");
+        setIsRecording(true);
+      };
+
+      recognition.onresult = async (event) => {
+        const speechText = event.results[event.resultIndex][0].transcript;
+        console.log("Recognized text:", speechText);
+        setRecognizedText(speechText);
+        await handleTranslate(speechText);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        console.log("Recognition ended");
+        setIsRecording(false);
+        if (isRecording) {
+          recognition.start(); // Restart recognition if still recording
+        }
+      };
+    } else {
+      setStatus("Speech recognition not supported in this browser.");
+    }
+  }, [sourceLang, isRecording]);
+
   const startRecognition = () => {
-    if (!isRecording && recognitionRef.current) {
-      isRestarting.current = true;
-      recognitionRef.current.lang = getLanguageCode(sourceLang);
+    console.log("Starting recognition...");
+    if (recognitionRef.current && !isRecording) {
       recognitionRef.current.start();
     }
   };
 
   const stopRecognition = () => {
-    if (isRecording && recognitionRef.current) {
-      isRestarting.current = false;
-      recognitionRef.current.stop();
+    console.log("Stopping recognition...");
+    if (recognitionRef.current) {
+      recognitionRef.current.abort(); // Use abort to immediately stop the recognition
       setIsRecording(false);
     }
   };
 
   const getLanguageCode = (language) => {
     const languageCodes = {
-      Italian: 'it-IT',
-      English: 'en-US',
-      Spanish: 'es-ES',
-      French: 'fr-FR',
-      Tagalog: 'tl-PH',
+      Italian: "it-IT",
+      English: "en-US",
+      Spanish: "es-ES",
+      French: "fr-FR",
+      Tagalog: "tl-PH",
     };
-    return languageCodes[language] || 'en-US';
+    return languageCodes[language] || "en-US";
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-6">
       <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6">2Translate Text</h1>
-
+        <h1 className="text-2xl font-bold mb-6">Translate Text</h1>
         <div className="mb-4">
-          <label htmlFor="sourceLang" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="sourceLang"
+            className="block text-sm font-medium text-gray-700"
+          >
             Source Language
           </label>
           <select
@@ -114,6 +133,7 @@ export default function TranslatePage() {
             value={sourceLang}
             onChange={(e) => setSourceLang(e.target.value)}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            disabled={isRecording} // Disable dropdown while recording
           >
             <option value="Italian">Italian</option>
             <option value="English">English</option>
@@ -124,14 +144,17 @@ export default function TranslatePage() {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="targetLang" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="targetLang"
+            className="block text-sm font-medium text-gray-700"
+          >
             Target Language
           </label>
           <select
             id="targetLang"
-            value={targetLang}
-            onChange={(e) => setTargetLang(e.target.value)}
+            ref={targetLangRef} // Assign ref to the target language dropdown
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            disabled={isRecording} // Disable dropdown while recording
           >
             <option value="Greek">Greek</option>
             <option value="English">English</option>
@@ -142,7 +165,10 @@ export default function TranslatePage() {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="tone" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="tone"
+            className="block text-sm font-medium text-gray-700"
+          >
             Tone
           </label>
           <select
@@ -158,35 +184,36 @@ export default function TranslatePage() {
           </select>
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="text" className="block text-sm font-medium text-gray-700">
-            Text to Translate
-          </label>
-          <textarea
-            id="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md"
-            rows={4}
-          ></textarea>
-        </div>
-
         <button
-          onClick={() => handleTranslate(text)}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          onClick={startRecognition}
+          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          Translate
+          Record
         </button>
-
         <button
-          onClick={isRecording ? stopRecognition : startRecognition}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white mt-2 ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+          onClick={stopRecognition}
+          className="w-full bg-red-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mt-4"
         >
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
+          Stop
         </button>
-
-        <p id="result" className="mt-4 text-lg font-semibold text-gray-700">{result}</p>
+        <button
+          onClick={handlePreparedRequest}
+          className="w-full bg-green-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mt-4"
+        >
+          Send Prepared Request
+        </button>
+        <button
+          onClick={handleDummyRequest}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4"
+        >
+          Send Dummy Request
+        </button>
+        <p id="status" className="mt-4 text-gray-700">{status}</p>
+        <p id="recognized-text" className="mt-2 text-gray-700">{recognizedText}</p>
+        <p id="result" className="mt-2 text-lg font-semibold text-gray-700">{translation}</p>
       </div>
     </div>
   );
-}
+};
+
+export default TranslatePage;

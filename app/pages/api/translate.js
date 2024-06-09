@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.OPENAI_API_KEY;
 
     const translationPrompt = `Translate the following text from ${source_lang} to ${target_lang} with a ${tone} tone: "${text}"`;
-
+  
     try {
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
