@@ -4,8 +4,16 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
+  --background-start-rgb: 206, 61, 243;
   --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 43, 43, 43;
+    --background-end-rgb: 26, 26, 26;
+  }
 }
 
 body {
@@ -22,10 +30,4 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-}
-
-.dark body {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
 }
