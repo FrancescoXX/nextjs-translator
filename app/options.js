@@ -8,7 +8,7 @@ export const languageOptions = [
     { value: "Japanese", label: "Japanese", flag: "🇯🇵" },
     { value: "Hindi", label: "Hindi", flag: "🇮🇳" },
     { value: "Arabic", label: "Arabic", flag: "AR" },
-    { value: "Urdu", label: "Urdu", flag: "URD" }
+    { value: "Urdu", label: "Urdu", flag: "URD" },
     { value: "Pidgin", label: "Pidgin", flag: "🇳🇬"},
     { value: "Ibo", label: "Ibo", flag: "🇳🇬"}
   ];
