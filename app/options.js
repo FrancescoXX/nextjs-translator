@@ -8,7 +8,9 @@ export const languageOptions = [
     { value: "Japanese", label: "Japanese", flag: "🇯🇵" },
     { value: "Hindi", label: "Hindi", flag: "🇮🇳" },
     { value: "Arabic", label: "Arabic", flag: "AR" },
-    { value: "Urdu", label: "Urdu", flag: "URD" }
+    { value: "Urdu", label: "Urdu", flag: "URD" },
+    { value: "Pidgin", label: "Pidgin", flag: "🇳🇬"},
+    { value: "Ibo", label: "Ibo", flag: "🇳🇬"}
   ];
   
   export const toneOptions = [
@@ -28,8 +30,6 @@ export const languageOptions = [
       Hebrew: "he-IL",
       Japanese: "ja-JP",
       Hindi: "hi-IN",
-      Arabic: "ar-001",
-      Urdu: "urd-PK"
     };
     return languageCodes[language] || "en-US";
   };
