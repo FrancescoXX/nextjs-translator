@@ -7,6 +7,8 @@ export const languageOptions = [
     { value: "Hebrew", label: "Hebrew", flag: "🇮🇱" },
     { value: "Japanese", label: "Japanese", flag: "🇯🇵" },
     { value: "Hindi", label: "Hindi", flag: "🇮🇳" },
+    { value: "Arabic", label: "Arabic", flag: "AR" },
+    { value: "Urdu", label: "Urdu", flag: "URD" }
     { value: "Pidgin", label: "Pidgin", flag: "🇳🇬"},
     { value: "Ibo", label: "Ibo", flag: "🇳🇬"}
   ];
@@ -28,8 +30,6 @@ export const languageOptions = [
       Hebrew: "he-IL",
       Japanese: "ja-JP",
       Hindi: "hi-IN",
-      Pidgin: "ng-NG",
-      Ibo: "ibo-IBO",
     };
     return languageCodes[language] || "en-US";
   };
