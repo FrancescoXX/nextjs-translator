@@ -1,5 +1,6 @@
 export const languageOptions = [
     { value: "Italian", label: "Italian", flag: "🇮🇹" },
+    { value: "Greek", label: "Greek", flag: "🇬🇷" }, // Added Greek
     { value: "English", label: "English", flag: "🇺🇸" },
     { value: "Spanish", label: "Spanish", flag: "🇪🇸" },
     { value: "French", label: "French", flag: "🇫🇷" },
@@ -30,6 +31,7 @@ export const languageOptions = [
       Hebrew: "he-IL",
       Japanese: "ja-JP",
       Hindi: "hi-IN",
+      Greek: "el-GR", // Added Greek language code
     };
     return languageCodes[language] || "en-US";
   };
